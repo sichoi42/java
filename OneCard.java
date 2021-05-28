@@ -79,7 +79,7 @@ public class OneCard
 		User com2 = new User("com2");
 		System.out.printf("게임 참가자: %s %s %s\n",p.name, com1.name, com2.name);
 		bulid_Cardset();
-		give_cards_to_users(p);
+        give_cards_to_users(p);
 		give_cards_to_users(com1);
 		give_cards_to_users(com2);
 		System.out.println("카드 배분 완료. 게임을 시작합니다.");
@@ -89,15 +89,23 @@ public class OneCard
 		Cardset.remove(index);
 		turned_in.add(new Card(type, num));
 		next_type = turned_in.get(0).type;
-
+        after_atack = true;
 		while (true)
 		{
 			int open_idx = turned_in.size() - 1;
-			System.out.printf("바닥에 공개된 카드 : %s %s\n", turned_in.get(open_idx).type, turned_in.get(open_idx).num);
-			System.out.printf("낼 수 있는 모양 : %s\n", next_type);//7카드 대비
+			if (turned_in.get(open_idx).type.equals("Joker"))
+                System.out.printf("바닥에 공개된 카드 : %s\n", turned_in.get(open_idx).type);
+            else
+                System.out.printf("바닥에 공개된 카드 : %s %s\n", turned_in.get(open_idx).type, turned_in.get(open_idx).num);
+            if (after_atack == true && turned_in.get(open_idx).type.equals("Joker"))
+                System.out.println("낼 수 있는 모양 : 모든 모양");
+            else if (after_atack == false && turned_in.get(open_idx).type.equals("Joker"))
+                ;
+            else
+                System.out.printf("낼 수 있는 모양 : %s\n", next_type);//7카드 대비
 			if (turn % 3 == 0)//player 턴
 			{
-				System.out.printf("%s 턴\n", p.name);
+                System.out.printf("\n%s 턴\n", p.name);
 				if (p.check_have_can_turn_in(p) == false)
 					p.draw_cards(p);
 				else
@@ -105,7 +113,7 @@ public class OneCard
 			}
 			else if (turn % 3 == 1 || turn % 3 == -2)//com1 턴
 			{
-				System.out.printf("%s 턴\n", com1.name);
+				System.out.printf("\n%s 턴\n", com1.name);
 				if (com1.check_have_can_turn_in(com1) == false)
 					com1.draw_cards(com1);
 				else
@@ -113,7 +121,7 @@ public class OneCard
 			}
 			else if (turn % 3 == 2 || turn % 3 == -1)//com2 턴
 			{
-				System.out.printf("%s 턴\n", com2.name);
+				System.out.printf("\n%s 턴\n", com2.name);
 				if (com2.check_have_can_turn_in(com2) == false)
 					com2.draw_cards(com2);
 				else
@@ -138,17 +146,10 @@ class Card
 	String num;
 	int damage;
 
-	Card()
-	{
-		super();
-	}
 	Card(String type, String num)
 	{
-		//if (type.equals("spade") || type.equals("dia") || type.equals("heart") || type.equals("clover") || type.equals("Joker"))
-			this.type=type;
-		//if (num.equals("A") || num.equals("2") || num.equals("3") || num.equals("4") || num.equals("5") || num.equals("6") || num.equals("7") || num.equals("8") ||
-		//num.equals("9") || num.equals("10") || num.equals("K") || num.equals("Q") || num.equals("J") || num.equals("Joker"))
-			this.num=num;
+		this.type=type;
+		this.num=num;
 		switch(this.num)
 		{
 			case "A":
@@ -167,19 +168,19 @@ class Card
 	}
 }
 
-class User extends Card
+class User
 {
 	ArrayList<Card> u_deck = new ArrayList<Card>();
 	String name;
-	User(String name)
+    User(String name)
 	{
-		this.name = name;
+       this.name = name;
 	}
 	boolean check_have_can_turn_in(User u)
 	{
 		int count;
 		int open_card = OneCard.turned_in.size() - 1;
-		String type = OneCard.turned_in.get(open_card).type;
+		String type = OneCard.next_type;
 		String num = OneCard.turned_in.get(open_card).num;
 		int damage = OneCard.turned_in.get(open_card).damage;
 
@@ -227,20 +228,18 @@ class User extends Card
 		int open_idx = OneCard.turned_in.size() - 1;
 		int damage = OneCard.turned_in.get(open_idx).damage;
 		for(i=0;i<u.u_deck.size();i++)
-			if (c.type.equals(u.u_deck.get(i).type) && c.num.equals(u.u_deck.get(i).num) || c.type.equals("Joker"))
+        {
+            if (c.type.equals(u.u_deck.get(i).type) && c.num.equals(u.u_deck.get(i).num))
 			{
-				count++;
-				break;
-			}
-		if (count == 0)
-			return -1;
+			     count++;
+				 break;
+            }
+        }
 		if (OneCard.after_atack == true)
-		{
 			damage = 0;
-			if (c.type.equals("Joker"))
+        if (c.type.equals("Joker") || OneCard.next_type.equals("Joker"))
 				return i;
-		}
-		if ((c.type.equals(OneCard.next_type) || c.num.equals(OneCard.turned_in.get(open_idx).num)) && c.damage >= damage)
+		if ((c.type.equals(OneCard.next_type) || c.num.equals(OneCard.turned_in.get(open_idx).num)) && c.damage >= damage && count == 1)
 			return i;
 		return -1;
 	}
@@ -254,12 +253,22 @@ class User extends Card
 		{
 			System.out.println("가지고 있는 카드:");
 			for (int i=0;i<u.u_deck.size();i++)
-				System.out.printf("%s %s\n",u.u_deck.get(i).type, u.u_deck.get(i).num);
+			{
+                if (u.u_deck.get(i).type.equals("Joker"))
+                    System.out.printf("%s\n",u.u_deck.get(i).type);
+                else
+                    System.out.printf("%s %s\n",u.u_deck.get(i).type, u.u_deck.get(i).num);
+            }
 			System.out.print("어떤 카드를 내시겠습니까?:");
 			type = OneCard.sc.next();
-			num = OneCard.sc.next();
-			do_return = new Card(type, num);
-			card_idx = can_return_this_card(do_return, u);
+            if (type.equals("Joker") == false)
+			{
+                num = OneCard.sc.next();
+			    do_return = new Card(type, num);
+            }
+            else
+                do_return = new Card(type, type);
+            card_idx = can_return_this_card(do_return, u);
 			if (card_idx >= 0)
 				break;
 			else
@@ -294,17 +303,23 @@ class User extends Card
 
 	void computer_select(User u)
 	{
-		int i;
+		int i, card_idx;
 		String type, num;
 		for (i=0;i<u.u_deck.size();i++)
-			if (can_return_this_card(u.u_deck.get(i), u) >= 0)
+		{
+            card_idx = can_return_this_card(u.u_deck.get(i), u);
+            if (card_idx >= 0)
 				break;
+        }
 		Card do_return = new Card(u.u_deck.get(i).type, u.u_deck.get(i).num);
 		type = do_return.type;
 		num = do_return.num;
 		u.u_deck.remove(i);
 		OneCard.turned_in.add(new Card(type, num));
-		System.out.printf("%s이 %s %s를 냈습니다.\n", u.name, type, num);
+		if (type.equals("Joker"))
+            System.out.printf("%s이 %s를 냈습니다.\n", u.name, type);
+        else
+            System.out.printf("%s이 %s %s를 냈습니다.\n", u.name, type, num);
 		if (OneCard.after_atack == true)
 			OneCard.after_atack = false;
 		switch (num)
